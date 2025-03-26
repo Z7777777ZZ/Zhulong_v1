@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.zsj.demo_v1.mapper.UserQuotaMapper">
+    <resultMap id="userQuotaResultMap" type="org.zsj.demo_v1.entity.UserQuota">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="totalQuota" column="total_quota"/>
+        <result property="usedQuota" column="used_quota"/>
+        <result property="remainingQuota" column="remaining_quota"/>
+        <result property="dailyFreeQuota" column="daily_free_quota"/>
+        <result property="lastFreeQuotaReset" column="last_free_quota_reset"/>
+    </resultMap>
+    
+    <select id="findByUserId" resultMap="userQuotaResultMap">
+        SELECT * FROM user_quota WHERE user_id = #{userId}
+    </select>
+    
+    <insert id="insert" parameterType="org.zsj.demo_v1.entity.UserQuota" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user_quota (
+            user_id, total_quota, used_quota, remaining_quota, daily_free_quota, last_free_quota_reset
+        ) VALUES (
+            #{userId}, #{totalQuota}, #{usedQuota}, #{remainingQuota}, #{dailyFreeQuota}, #{lastFreeQuotaReset}
+        )
+    </insert>
+    
+    <update id="update" parameterType="org.zsj.demo_v1.entity.UserQuota">
+        UPDATE user_quota
+        <set>
+            <if test="totalQuota != null">total_quota = #{totalQuota},</if>
+            <if test="usedQuota != null">used_quota = #{usedQuota},</if>
+            <if test="remainingQuota != null">remaining_quota = #{remainingQuota},</if>
+            <if test="dailyFreeQuota != null">daily_free_quota = #{dailyFreeQuota},</if>
+            <if test="lastFreeQuotaReset != null">last_free_quota_reset = #{lastFreeQuotaReset},</if>
+        </set>
+        WHERE user_id = #{userId}
+    </update>
+    
+    <update id="updateFreeQuotaReset">
+        UPDATE user_quota
+        SET last_free_quota_reset = CURRENT_DATE(),
+            remaining_quota = remaining_quota + daily_free_quota
+        WHERE user_id = #{userId}
+    </update>
+    
+    <update id="consumeQuota">
+        UPDATE user_quota
+        SET used_quota = used_quota + #{quotaAmount},
+            remaining_quota = remaining_quota - #{quotaAmount}
+        WHERE user_id = #{userId} AND remaining_quota >= #{quotaAmount}
+    </update>
+</mapper> 

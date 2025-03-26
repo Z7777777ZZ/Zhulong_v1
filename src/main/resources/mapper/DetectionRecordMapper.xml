@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.zsj.demo_v1.mapper.DetectionRecordMapper">
+    <resultMap id="BaseResultMap" type="org.zsj.demo_v1.entity.DetectionRecord">
+        <id column="id" property="id" />
+        <result column="user_id" property="userId" />
+        <result column="detection_type_id" property="detectionTypeId" />
+        <result column="file_url" property="fileUrl" />
+        <result column="file_name" property="fileName" />
+        <result column="file_size" property="fileSize" />
+        <result column="content" property="content" />
+        <result column="result" property="result" />
+        <result column="confidence" property="confidence" />
+        <result column="detection_time" property="detectionTime" />
+        <result column="status" property="status" />
+        <result column="error_message" property="errorMessage" />
+        <association property="detectionType" javaType="org.zsj.demo_v1.entity.DetectionType">
+            <id column="type_id" property="id" />
+            <result column="type_name" property="typeName" />
+            <result column="type_description" property="description" />
+            <result column="type_quota_cost" property="quotaCost" />
+        </association>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, user_id, detection_type_id, file_url, file_name, file_size, content, result,
+        confidence, detection_time, status, error_message
+    </sql>
+    
+    <sql id="Join_Column_List">
+        r.id, r.user_id, r.detection_type_id, r.file_url, r.file_name, r.file_size, r.content, r.result,
+        r.confidence, r.detection_time, r.status, r.error_message,
+        t.id as type_id, t.type_name, t.description as type_description, t.quota_cost as type_quota_cost
+    </sql>
+
+    <select id="findByUserId" resultMap="BaseResultMap" parameterType="java.lang.Long">
+        SELECT 
+        <include refid="Join_Column_List" />
+        FROM detection_record r
+        LEFT JOIN detection_type t ON r.detection_type_id = t.id
+        WHERE r.user_id = #{userId}
+        ORDER BY r.detection_time DESC
+    </select>
+    
+    <select id="findByUserIdAndType" resultMap="BaseResultMap">
+        SELECT 
+        <include refid="Join_Column_List" />
+        FROM detection_record r
+        LEFT JOIN detection_type t ON r.detection_type_id = t.id
+        WHERE r.user_id = #{userId} AND r.detection_type_id = #{typeId}
+        ORDER BY r.detection_time DESC
+    </select>
+    
+    <select id="findByUserIdAndTimeRange" resultMap="BaseResultMap">
+        SELECT 
+        <include refid="Join_Column_List" />
+        FROM detection_record r
+        LEFT JOIN detection_type t ON r.detection_type_id = t.id
+        WHERE r.user_id = #{userId}
+        AND r.detection_time BETWEEN #{startTime} AND #{endTime}
+        ORDER BY r.detection_time DESC
+    </select>
+    
+    <select id="findByUserIdAndResult" resultMap="BaseResultMap">
+        SELECT 
+        <include refid="Join_Column_List" />
+        FROM detection_record r
+        LEFT JOIN detection_type t ON r.detection_type_id = t.id
+        WHERE r.user_id = #{userId} AND r.result = #{result}
+        ORDER BY r.detection_time DESC
+    </select>
+    
+    <select id="findById" resultMap="BaseResultMap" parameterType="java.lang.Long">
+        SELECT 
+        <include refid="Join_Column_List" />
+        FROM detection_record r
+        LEFT JOIN detection_type t ON r.detection_type_id = t.id
+        WHERE r.id = #{id}
+    </select>
+    
+    <select id="countByUserId" resultType="java.lang.Integer" parameterType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM detection_record
+        WHERE user_id = #{userId}
+    </select>
+    
+    <insert id="insert" parameterType="org.zsj.demo_v1.entity.DetectionRecord" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO detection_record (
+            user_id, detection_type_id, file_url, file_name, file_size, content, result,
+            confidence, detection_time, status, error_message
+        )
+        VALUES (
+            #{userId}, #{detectionTypeId}, #{fileUrl}, #{fileName}, #{fileSize}, #{content}, #{result},
+            #{confidence}, #{detectionTime}, #{status}, #{errorMessage}
+        )
+    </insert>
+    
+    <update id="update" parameterType="org.zsj.demo_v1.entity.DetectionRecord">
+        UPDATE detection_record
+        <set>
+            <if test="result != null">result = #{result},</if>
+            <if test="confidence != null">confidence = #{confidence},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="errorMessage != null">error_message = #{errorMessage},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+    
+    <delete id="deleteById" parameterType="java.lang.Long">
+        DELETE FROM detection_record
+        WHERE id = #{id}
+    </delete>
+</mapper> 
