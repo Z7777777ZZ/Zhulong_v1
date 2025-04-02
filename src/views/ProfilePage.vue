@@ -4,7 +4,7 @@
       <aside class="sidebar" :class="{ 'sidebar-collapsed': sidebarCollapsed, 'sidebar-open': sidebarOpen }">
         <div class="sidebar-header">
           <div class="flex items-center">
-            <img src="/placeholder.svg?height=40&width=40" alt="Logo" class="h-8 w-8" />
+            <img src="/logo.jpg?height=40&width=40" alt="Logo" class="h-8 w-8" />
             <span v-if="!sidebarCollapsed" class="ml-2 text-lg font-bold text-white">AIGC Detector</span>
           </div>
           <button @click="toggleSidebar" class="sidebar-toggle">
@@ -36,9 +36,9 @@
           <div class="usage-info" v-if="!sidebarCollapsed">
             <p class="text-sm text-gray-400">今日使用额度</p>
             <div class="usage-bar">
-              <div class="usage-progress" :style="{ width: `${(userStats.usedCount / userStats.dailyLimit) * 100}%` }"></div>
+              <div class="usage-progress" :style="{ width: `${Math.min(100, Math.max(0, (userStats.usedQuota / userStats.dailyLimit) * 100))}%` }"></div>
             </div>
-            <p class="text-xs text-gray-400 mt-1">{{ userStats.usedCount }}/{{ userStats.dailyLimit }} 次</p>
+            <p class="text-xs text-gray-400 mt-1">{{ userStats.usedQuota }}/{{ userStats.dailyLimit }} 次</p>
           </div>
           
           <div class="user-profile">

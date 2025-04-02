@@ -25,7 +25,27 @@ export const getDetectionRecordDetail = (id) => {
   return axios.get(`/history/${id}`);
 };
 
-// 删除历史记录
-export const deleteDetectionRecord = (id) => {
-  return axios.delete(`/history/${id}`);
+// 获取所有检测记录
+export const getDetectionRecords = (params) => {
+  return axios.get('/history/records', { params });
+};
+
+// 获取检测记录详情
+export const getDetectionDetail = (recordId) => {
+  return axios.get(`/history/records/${recordId}`);
+};
+
+// 删除检测记录
+export const deleteDetectionRecord = (recordId) => {
+  return axios.delete(`/history/records/${recordId}`);
+};
+
+// 消耗用户额度，进行内容检测
+export const detectContent = (data) => {
+  console.log('调用检测内容API，消耗用户额度:', data);
+  return axios.post('/detection/detect', data, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  });
 }; 

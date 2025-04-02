@@ -16,7 +16,7 @@
                   <mail-icon class="icon" />
                 </div>
                 <h3 class="card-title">电子邮件</h3>
-                <p class="card-text">support@aigcdetector.com</p>
+                <p class="card-text">zhulong@aigcdetector.com</p>
                 <p class="card-description">工作日24小时内回复</p>
                 <a href="mailto:support@aigcdetector.com" class="card-link">发送邮件</a>
               </div>
@@ -28,7 +28,7 @@
                 <h3 class="card-title">客服热线</h3>
                 <p class="card-text">400-123-4567</p>
                 <p class="card-description">周一至周五 9:00-18:00</p>
-                <a href="tel:4001234567" class="card-link">立即拨打</a>
+                <button class="card-link" @click="tempPrompt">立即拨打</button>
               </div>
               
               <div class="info-card">
@@ -38,7 +38,7 @@
                 <h3 class="card-title">在线客服</h3>
                 <p class="card-text">实时聊天支持</p>
                 <p class="card-description">工作日 9:00-22:00</p>
-                <button class="card-link">开始聊天</button>
+                <button class="card-link" @click="tempPrompt">开始聊天</button>
               </div>
             </div>
             
@@ -134,10 +134,10 @@
                 <img src="/placeholder.svg?height=200&width=350" alt="北京办公室" class="location-img" />
               </div>
               <div class="location-info">
-                <h3 class="location-title">北京总部</h3>
+                <h3 class="location-title">杭州总部</h3>
                 <p class="location-address">
                   <map-pin-icon class="location-icon" />
-                  北京市海淀区中关村科技园区8号楼
+                  浙江省杭州市浙江大学创业园
                 </p>
                 <p class="location-hours">
                   <clock-icon class="location-icon" />
@@ -151,10 +151,10 @@
                 <img src="/placeholder.svg?height=200&width=350" alt="上海办公室" class="location-img" />
               </div>
               <div class="location-info">
-                <h3 class="location-title">上海分部</h3>
+                <h3 class="location-title">杭州分部</h3>
                 <p class="location-address">
                   <map-pin-icon class="location-icon" />
-                  上海市浦东新区张江高科技园区25号楼
+                  浙江省杭州市浙江大学紫金港校区元空间
                 </p>
                 <p class="location-hours">
                   <clock-icon class="location-icon" />
@@ -248,17 +248,18 @@
       <footer class="footer">
         <div class="footer-content">
           <div class="footer-logo">
-            <img src="/placeholder.svg?height=40&width=40" alt="Logo" class="logo-img" />
+            <img src="/logo.jpg?height=40&width=40" alt="Logo" class="logo-img" />
             <span class="logo-text">AIGC Detector</span>
           </div>
           
           <div class="footer-links">
-            <a href="#" class="footer-link">首页</a>
-            <a href="#" class="footer-link">产品</a>
+            <a href="/home" class="footer-link">首页</a>
+            <!-- <a href="#" class="footer-link">产品</a>
             <a href="#" class="footer-link">定价</a>
             <a href="#" class="footer-link">文档</a>
-            <a href="#" class="footer-link">博客</a>
-            <a href="#" class="footer-link">关于我们</a>
+            <a href="#" class="footer-link">博客</a>-->
+           
+            <a href="/about" class="footer-link">关于我们</a>
           </div>
           
           <p class="copyright">© 2025 AIGC Detector. 保留所有权利。</p>
@@ -318,6 +319,10 @@
       expandedFaq.value = index;
     }
   };
+
+const tempPrompt = () => {
+  alert('暂不支持该功能');
+}
   
   // 提交表单
   const submitForm = async () => {

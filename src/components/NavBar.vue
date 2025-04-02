@@ -4,7 +4,7 @@
     <div class="container mx-auto px-4 py-3 flex items-center justify-between">
       <div class="flex items-center">
         <div class="logo-container">
-          <img src="/placeholder.svg?height=40&width=40" alt="Logo" class="h-10 w-10" />
+          <img src="/logo.jpg?height=40&width=40" alt="Logo" class="h-10 w-10" />
           <span class="ml-2 text-xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">AIGC Detector</span>
         </div>
       </div>

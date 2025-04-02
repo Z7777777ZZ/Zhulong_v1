@@ -13,7 +13,7 @@
         <section class="content-section">
           <div class="about-grid">
             <div class="about-image">
-              <img src="/placeholder.svg?height=400&width=600" alt="团队照片" class="team-image" />
+              <img src="/About_pic1.jpg?height=400&width=600" alt="团队照片" class="team-image" />
             </div>
             
             <div class="about-content">
@@ -34,44 +34,44 @@
         <section class="content-section">
           <h2 class="section-title">我们的团队</h2>
           <p class="team-intro">
-            我们的团队由AI研究、计算机视觉、自然语言处理和音频分析领域的专家组成，拥有丰富的行业经验和学术背景。
+            <!--我们的团队由AI研究、计算机视觉、自然语言处理和音频分析领域的专家组成，拥有丰富的行业经验和学术背景。-->
+            我们的团队是一群对科技充满热情的大学生组成，他们优秀，拥有丰富的学术背景和实践经历。
           </p>
           
           <div class="team-grid">
             <div class="team-card">
               <div class="member-avatar">
-                <img src="/placeholder.svg?height=120&width=120" alt="团队成员" class="avatar-image" />
+                <img src="/Dong.jpg?height=120&width=120" alt="团队成员" class="avatar-image" />
               </div>
-              <h3 class="member-name">张博士</h3>
-              <p class="member-title">首席技术官</p>
+              <h3 class="member-name">Dong</h3>
+              <p class="member-title">首席执行官</p>
               <p class="member-bio">
-                人工智能领域资深专家，拥有10年以上深度学习研究经验，曾在多家知名科技公司担任技术领导职位。
+                专精人工智能领域，同时精通商业和公司管理，公司的领航人
               </p>
             </div>
             
             <div class="team-card">
               <div class="member-avatar">
-                <img src="/placeholder.svg?height=120&width=120" alt="团队成员" class="avatar-image" />
+                <img src="/Huang.jpg?height=120&width=120" alt="团队成员" class="avatar-image" />
               </div>
-              <h3 class="member-name">李教授</h3>
+              <h3 class="member-name">Huang</h3>
               <p class="member-title">首席科学家</p>
               <p class="member-bio">
-                计算机视觉专家，在图像分析和识别领域发表多篇高影响力论文，曾主导多个大型AI项目的研发工作。
+                专精信息安全领域，发表多篇高影响力论文，曾主导或参与多个大型AI项目的研发工作
               </p>
             </div>
             
             <div class="team-card">
               <div class="member-avatar">
-                <img src="/placeholder.svg?height=120&width=120" alt="团队成员" class="avatar-image" />
+                <img src="/Zhi.jpg?height=120&width=120" alt="团队成员" class="avatar-image" />
               </div>
-              <h3 class="member-name">王工程师</h3>
-              <p class="member-title">自然语言处理负责人</p>
+              <h3 class="member-name">Zhi</h3>
+              <p class="member-title">s</p>
               <p class="member-bio">
-                语言模型专家，专注于文本生成和分析技术，拥有丰富的大型语言模型开发和应用经验。
+                具有多年开发经验和产品设计经验，致力于打造用户友好的平台与产品
               </p>
             </div>
-            
-            <div class="team-card">
+            <!--<div class="team-card">
               <div class="member-avatar">
                 <img src="/placeholder.svg?height=120&width=120" alt="团队成员" class="avatar-image" />
               </div>
@@ -80,7 +80,8 @@
               <p class="member-bio">
                 拥有丰富的AI产品设计和管理经验，致力于打造用户友好、功能强大的AI检测工具。
               </p>
-            </div>
+            </div>-->
+            
           </div>
         </section>
         

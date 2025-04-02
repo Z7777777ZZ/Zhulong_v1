@@ -3,7 +3,7 @@
       <div class="login-card">
         <div class="login-header">
           <div class="flex items-center justify-center mb-6">
-            <img src="/placeholder.svg?height=40&width=40" alt="Logo" class="h-10 w-10" />
+            <img src="/logo.jpg?height=40&width=40" alt="Logo" class="h-10 w-10" />
             <span class="ml-2 text-xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">AIGC Detector</span>
           </div>
           <h1 class="login-title">欢迎回来</h1>

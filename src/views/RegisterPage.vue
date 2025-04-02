@@ -3,7 +3,7 @@
       <div class="register-card">
         <div class="register-header">
           <div class="flex items-center justify-center mb-6">
-            <img src="/placeholder.svg?height=40&width=40" alt="Logo" class="h-10 w-10" />
+            <img src="/logo.jpg?height=40&width=40" alt="Logo" class="h-10 w-10" />
             <span class="ml-2 text-xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">AIGC Detector</span>
           </div>
           <h1 class="register-title">创建账号</h1>
@@ -46,6 +46,33 @@
               />
             </div>
             <p v-if="validationErrors.email" class="error-text">{{ validationErrors.email }}</p>
+          </div>
+          
+          <div class="form-group">
+            <label for="verification" class="form-label">邮箱验证码</label>
+            <div class="verification-container">
+              <div class="input-container verification-input-container">
+                <shield-check-icon class="input-icon" />
+                <input 
+                  type="text" 
+                  id="verification" 
+                  v-model="formData.emailVerificationCode" 
+                  class="form-input" 
+                  placeholder="请输入验证码"
+                  required
+                />
+              </div>
+              <button 
+                type="button" 
+                @click="sendVerificationCode"
+                :disabled="isSendingCode || countDown > 0"
+                class="verification-btn"
+              >
+                <loader-icon v-if="isSendingCode" class="animate-spin h-4 w-4 mr-1" />
+                {{ countDown > 0 ? `${countDown}秒后重新发送` : '获取验证码' }}
+              </button>
+            </div>
+            <p v-if="validationErrors.emailVerificationCode" class="error-text">{{ validationErrors.emailVerificationCode }}</p>
           </div>
           
           <div class="form-group">
@@ -123,7 +150,7 @@
   </template>
   
   <script setup>
-  import { ref, reactive, inject } from 'vue';
+  import { ref, reactive, inject, onUnmounted } from 'vue';
   import { useRouter } from 'vue-router';
   import { 
     User as UserIcon, 
@@ -132,7 +159,8 @@
     Lock as LockIcon, 
     Eye as EyeIcon, 
     EyeOff as EyeOffIcon,
-    Loader as LoaderIcon
+    Loader as LoaderIcon,
+    ShieldCheck as ShieldCheckIcon
   } from 'lucide-vue-next';
   
   // 注入auth服务
@@ -146,6 +174,7 @@
     phone: '',
     password: '',
     confirmPassword: '',
+    emailVerificationCode: '',
     agreeTerms: false
   });
   
@@ -154,6 +183,9 @@
   const isLoading = ref(false);
   const errorMessage = ref('');
   const validationErrors = reactive({});
+  const isSendingCode = ref(false);
+  const countDown = ref(0);
+  let timerInterval = null;
   
   // 切换密码显示
   const togglePassword = () => {
@@ -167,6 +199,7 @@
     validationErrors.phone = '';
     validationErrors.password = '';
     validationErrors.confirmPassword = '';
+    validationErrors.emailVerificationCode = '';
     validationErrors.agreeTerms = '';
     
     let isValid = true;
@@ -186,6 +219,15 @@
       isValid = false;
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       validationErrors.email = '请输入有效的邮箱地址';
+      isValid = false;
+    }
+    
+    // 验证码验证
+    if (!formData.emailVerificationCode) {
+      validationErrors.emailVerificationCode = '请输入验证码';
+      isValid = false;
+    } else if (formData.emailVerificationCode.length !== 6 || !/^\d+$/.test(formData.emailVerificationCode)) {
+      validationErrors.emailVerificationCode = '验证码为6位数字';
       isValid = false;
     }
     
@@ -222,6 +264,48 @@
     return isValid;
   };
   
+  // 发送验证码
+  const sendVerificationCode = async () => {
+    // 验证邮箱格式
+    if (!formData.email) {
+      validationErrors.email = '请输入邮箱';
+      return;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      validationErrors.email = '请输入有效的邮箱地址';
+      return;
+    }
+    
+    validationErrors.email = '';
+    isSendingCode.value = true;
+    
+    try {
+      await auth.sendVerificationCode(formData.email);
+      
+      // 开始倒计时
+      countDown.value = 60;
+      timerInterval = setInterval(() => {
+        if (countDown.value > 0) {
+          countDown.value--;
+        } else {
+          clearInterval(timerInterval);
+        }
+      }, 1000);
+      
+    } catch (error) {
+      errorMessage.value = '发送验证码失败，请稍后重试';
+      console.error('发送验证码错误:', error);
+    } finally {
+      isSendingCode.value = false;
+    }
+  };
+  
+  // 清除定时器
+  onUnmounted(() => {
+    if (timerInterval) {
+      clearInterval(timerInterval);
+    }
+  });
+  
   // 处理注册
   const handleRegister = async () => {
     if (!validateForm()) {
@@ -236,6 +320,7 @@
         username: formData.username,
         email: formData.email,
         password: formData.password,
+        emailVerificationCode: formData.emailVerificationCode,
         phone: formData.phone || null
       };
       
@@ -433,5 +518,39 @@
     color: #DC2626;
     font-size: 0.75rem;
     margin-top: 0.25rem;
+  }
+  
+  .verification-container {
+    display: flex;
+    gap: 0.5rem;
+  }
+  
+  .verification-input-container {
+    flex: 1;
+  }
+  
+  .verification-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: white;
+    background: linear-gradient(to right, #3182ce, #805ad5);
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.3s;
+  }
+  
+  .verification-btn:hover:not(:disabled) {
+    opacity: 0.9;
+  }
+  
+  .verification-btn:disabled {
+    background: #cbd5e0;
+    cursor: not-allowed;
   }
   </style>

@@ -116,13 +116,14 @@
         <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
             <div class="flex items-center mb-6">
-              <img src="/placeholder.svg?height=40&width=40" alt="Logo" class="h-10 w-10" />
+              <!---->
+              <img src="/logo1_transparent.svg?height=40&width=40" alt="Logo" class="h-10 w-10" />
               <span class="ml-2 text-xl font-bold text-white">AIGC Detector</span>
             </div>
             <p class="text-gray-400 mb-6">
               专业的AI生成内容检测平台，为您提供精准、高效的检测服务。
             </p>
-            <div class="flex space-x-4">
+            <!--<div class="flex space-x-4">
               <a href="#" class="text-gray-400 hover:text-white">
                 <twitter-icon class="h-5 w-5" />
               </a>
@@ -132,26 +133,27 @@
               <a href="#" class="text-gray-400 hover:text-white">
                 <linkedin-icon class="h-5 w-5" />
               </a>
-            </div>
+            </div>-->
+            
           </div>
           
           <div>
             <h3 class="text-lg font-semibold text-white mb-6">产品</h3>
             <ul class="space-y-4">
-              <li><a href="#" class="text-gray-400 hover:text-white">图片检测</a></li>
-              <li><a href="#" class="text-gray-400 hover:text-white">文本检测</a></li>
-              <li><a href="#" class="text-gray-400 hover:text-white">视频检测</a></li>
-              <li><a href="#" class="text-gray-400 hover:text-white">音频检测</a></li>
+              <li><a href="/product" class="text-gray-400 hover:text-white" >图片检测</a></li>
+              <li><a href="/product" class="text-gray-400 hover:text-white" >文本检测</a></li>
+              <li><a href="/product" class="text-gray-400 hover:text-white" >视频检测</a></li>
+              <li><a href="/product" class="text-gray-400 hover:text-white" >音频检测</a></li>
             </ul>
           </div>
           
           <div>
             <h3 class="text-lg font-semibold text-white mb-6">关于</h3>
             <ul class="space-y-4">
-              <li><router-link to="/about" class="text-gray-400 hover:text-white">关于我们</router-link></li>
-              <li><a href="mailto:contact@aigcdetector.com" class="text-gray-400 hover:text-white">联系我们</a></li>
-              <li><a href="#" class="text-gray-400 hover:text-white">隐私政策</a></li>
-              <li><a href="#" class="text-gray-400 hover:text-white">服务条款</a></li>
+              <li><a href="/about" class="text-gray-400 hover:text-white">关于我们</a></li>
+              <li><a href="/contact" class="text-gray-400 hover:text-white">联系我们</a></li>
+              <!--<li><a href="#" class="text-gray-400 hover:text-white">隐私政策</a></li>-->
+              <li><a href="/service" class="text-gray-400 hover:text-white">服务条款</a></li>
             </ul>
           </div>
           
@@ -160,7 +162,7 @@
             <ul class="space-y-4">
               <li class="flex items-center text-gray-400">
                 <mail-icon class="h-5 w-5 mr-2" />
-                contact@aigcdetector.com
+                zhulong@aigcdetector.com
               </li>
               <li class="flex items-center text-gray-400">
                 <phone-icon class="h-5 w-5 mr-2" />
@@ -168,7 +170,7 @@
               </li>
               <li class="flex items-center text-gray-400">
                 <map-pin-icon class="h-5 w-5 mr-2" />
-                北京市海淀区科技园
+                浙江省烛龙人工智能有限公司
               </li>
             </ul>
           </div>
@@ -194,9 +196,9 @@ import {
   Video as VideoIcon,
   Music as MusicIcon,
   UserPlus as UserPlusIcon,
-  Twitter as TwitterIcon,
-  Github as GithubIcon,
-  Linkedin as LinkedinIcon,
+  // Twitter as TwitterIcon,
+  // Github as GithubIcon,
+  // Linkedin as LinkedinIcon,
   Mail as MailIcon,
   Phone as PhoneIcon,
   MapPin as MapPinIcon
@@ -233,6 +235,7 @@ const goToWorkspace = () => {
   }
 };
 
+
 // const mobileMenuOpen = ref(false);
 
 // // const toggleMobileMenu = () => {
@@ -266,7 +269,7 @@ const steps = [
   {
     title: '注册账号',
     description: '简单注册账号，每天免费获得10次检测机会。',
-    image: '/Home_pic2.jpg?height=150&width=200'
+    image: '/Home_pic4.jpg?height=150&width=200'
   },
   {
     title: '上传内容',
@@ -276,7 +279,7 @@ const steps = [
   {
     title: '获取结果',
     description: '系统快速分析并给出详细的检测结果和AI生成概率。',
-    image: '/Home_pic2.jpg?height=150&width=200'
+    image: '/Home_pic3.jpg?height=150&width=200'
   }
 ];
 

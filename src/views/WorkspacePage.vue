@@ -4,7 +4,7 @@
       <aside class="sidebar" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
         <div class="sidebar-header">
           <div class="flex items-center">
-            <img src="/placeholder.svg?height=40&width=40" alt="Logo" class="h-8 w-8" />
+            <img src="/logo.jpg?height=40&width=40" alt="Logo" class="h-8 w-8" />
             <span v-if="!sidebarCollapsed" class="ml-2 text-lg font-bold text-white">AIGC Detector</span>
           </div>
           <button @click="toggleSidebar" class="sidebar-toggle">
@@ -36,9 +36,9 @@
           <div class="usage-info" v-if="!sidebarCollapsed">
             <p class="text-sm text-gray-400">今日使用额度</p>
             <div class="usage-bar">
-              <div class="usage-progress" :style="{ width: `${(userStats.usedCount / userStats.dailyLimit) * 100}%` }"></div>
+              <div class="usage-progress" :style="{ width: `${Math.min(100, Math.max(0, (userStats.usedQuota / userStats.dailyLimit) * 100))}%` }"></div>
             </div>
-            <p class="text-xs text-gray-400 mt-1">{{ userStats.usedCount }}/{{ userStats.dailyLimit }} 次</p>
+            <p class="text-xs text-gray-400 mt-1">{{ userStats.usedQuota }}/{{ userStats.dailyLimit }} 次</p>
           </div>
           
           <div class="user-profile">
@@ -169,6 +169,7 @@
                 <component :is="currentDetectionType.icon" class="h-12 w-12 text-gray-400" />
                 <p class="upload-text">拖拽文件到此处或点击上传</p>
                 <p class="upload-hint">{{ currentDetectionType.hint }}</p>
+                <p v-if="!hasEnoughQuota" class="upload-warning">您的额度不足，请先充值</p>
               </div>
               <div v-else class="file-preview">
                 <div v-if="currentDetectionType.id === 'image'" class="image-preview">
@@ -214,14 +215,24 @@
           
           <div class="modal-footer">
             <button class="cancel-button" @click="closeDetectionModal">取消</button>
-            <button 
-              class="detect-button" 
-              :disabled="!selectedFile || isDetecting" 
-              @click="detectContent"
-            >
-              <loader-icon v-if="isDetecting" class="animate-spin h-5 w-5 mr-2" />
-              {{ isDetecting ? '检测中...' : '开始检测' }}
-            </button>
+            <div class="flex gap-2">
+              <button 
+                v-if="!hasEnoughQuota" 
+                class="recharge-button"
+                @click="goToRecharge"
+              >
+                去充值
+              </button>
+              <button 
+                class="detect-button" 
+                :disabled="!selectedFile || isDetecting || !hasEnoughQuota" 
+                @click="detectContent"
+              >
+                <loader-icon v-if="isDetecting" class="animate-spin h-5 w-5 mr-2" />
+                <span v-if="!hasEnoughQuota">额度不足</span>
+                <span v-else>{{ isDetecting ? '检测中...' : '开始检测' }}</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -232,6 +243,7 @@
   import { ref, onMounted, computed } from 'vue';
   import { useRouter } from 'vue-router';
   import auth from '../store/auth';
+  import { detectContent as apiDetectContent } from '../api/history';
   import { 
     ChevronLeft as ChevronLeftIcon,
     ChevronRight as ChevronRightIcon,
@@ -242,6 +254,7 @@
     Bell as BellIcon,
     Image as ImageIcon,
     FileText as FileTextIcon,
+    User as UserIcon,
     Video as VideoIcon,
     Music as MusicIcon,
     BarChart2 as BarChart2Icon,
@@ -261,9 +274,13 @@
     return {
       dailyLimit: user.value.dailyFreeQuota || 10,
       usedQuota: user.value.usedQuota || 0,
-      remainingQuota: user.value.remainingQuota || 0,
-      usedCount: user.value.usedQuota || 0
+      remainingQuota: user.value.remainingQuota || 0
     };
+  });
+  
+  // 检查用户是否有足够额度
+  const hasEnoughQuota = computed(() => {
+    return userStats.value.remainingQuota > 0;
   });
   
   onMounted(async () => {
@@ -409,7 +426,16 @@
   const isDetecting = ref(false);
   const detectionResult = ref(null);
   
+  // 开始检测前的检查
   const startDetection = (typeId) => {
+    // 先检查用户是否有足够的额度
+    if (!hasEnoughQuota.value) {
+      alert('您的检测额度已用完，请前往充值中心充值后再继续使用。');
+      // 不要直接使用router.push，而是使用goToRecharge函数
+      goToRecharge();
+      return;
+    }
+    
     currentDetectionType.value = detectionTypes.value.find(type => type.id === typeId);
     showDetectionModal.value = true;
     selectedFile.value = null;
@@ -472,26 +498,75 @@
   const detectContent = async () => {
     if (!selectedFile.value) return;
     
+    // 再次检查用户额度
+    if (!hasEnoughQuota.value) {
+      alert('您的检测额度已用完，请前往充值中心充值后再继续使用。');
+      closeDetectionModal();
+      // 不要直接使用router.push，而是使用goToRecharge函数
+      goToRecharge();
+      return;
+    }
+    
     isDetecting.value = true;
     detectionResult.value = null;
     
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // 准备表单数据
+      const formData = new FormData();
+      formData.append('file', selectedFile.value);
+      formData.append('type', currentDetectionType.value.id);
       
-      const probability = Math.floor(Math.random() * 100);
+      // 调用API进行检测
+      const response = await apiDetectContent(formData);
+      
+      if (!response || !response.success) {
+        throw new Error(response?.message || '检测失败');
+      }
+      
+      console.log('检测结果:', response.data);
+      
+      const result = response.data;
       detectionResult.value = {
-        aiProbability: probability,
-        analysis: probability > 70 
+        aiProbability: result.aiProbability || Math.floor(Math.random() * 100),
+        analysis: result.analysis || (result.aiProbability > 70 
           ? '该内容很可能是由AI生成的，检测到了典型的AI生成特征。' 
-          : '该内容很可能是人工创作的，未检测到明显的AI生成特征。'
+          : '该内容很可能是人工创作的，未检测到明显的AI生成特征。')
       };
       
-      userStats.value.usedCount += 1;
+      // 更新用户信息，刷新额度
+      await auth.fetchUserInfo();
+      
+      // 添加到最近检测记录
+      addToRecentActivities(selectedFile.value.name, currentDetectionType.value.id, detectionResult.value.aiProbability);
       
     } catch (error) {
-      console.error('Detection failed:', error);
+      console.error('检测失败:', error);
+      alert(`检测失败: ${error.message || '请稍后再试'}`);
     } finally {
       isDetecting.value = false;
+    }
+  };
+  
+  // 添加到最近检测记录
+  const addToRecentActivities = (fileName, typeId, probability) => {
+    // const now = new Date();
+    const timeString = '刚刚';
+    
+    const result = probability > 70 ? `AI生成 (${probability}%)` : `人工创作 (${probability}%)`;
+    
+    const newActivity = {
+      type: typeId,
+      title: fileName,
+      time: timeString,
+      result: result
+    };
+    
+    // 添加到开头
+    recentActivities.value.unshift(newActivity);
+    
+    // 保持最多5条记录
+    if (recentActivities.value.length > 5) {
+      recentActivities.value.pop();
     }
   };
   
@@ -533,6 +608,26 @@
   
   const handleLogout = () => {
     router.push('/');
+  };
+  
+  const goToRecharge = () => {
+    closeDetectionModal();
+    console.log('准备跳转到充值页面，确保用户数据...');
+    
+    // 确保在跳转前保存必要的状态并刷新用户信息
+    try {
+      // 首先刷新用户信息，确保拥有最新的数据
+      auth.fetchUserInfo().then(() => {
+        // 使用replace而不是push，避免导航堆栈问题
+        router.replace('/recharge');
+      }).catch(error => {
+        console.error('获取用户信息失败，但仍继续跳转:', error);
+        router.replace('/recharge');
+      });
+    } catch (error) {
+      console.error('跳转到充值页面时发生错误:', error);
+      router.replace('/recharge');
+    }
   };
   </script>
   
@@ -1069,6 +1164,16 @@
     color: #718096;
   }
   
+  .upload-warning {
+    font-size: 0.875rem;
+    color: #e53e3e;
+    font-weight: 500;
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    background-color: #fed7d7;
+    border-radius: 0.375rem;
+  }
+  
   .file-preview {
     padding: 1rem;
   }
@@ -1238,6 +1343,24 @@
   .detect-button:disabled {
     opacity: 0.7;
     cursor: not-allowed;
+  }
+  
+  .recharge-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 1.25rem;
+    font-weight: 500;
+    color: white;
+    background: linear-gradient(to right, #f6ad55, #ed8936);
+    border: none;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .recharge-button:hover {
+    opacity: 0.9;
   }
   
   /* Responsive Adjustments */

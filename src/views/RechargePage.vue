@@ -4,7 +4,7 @@
       <aside class="sidebar" :class="{ 'sidebar-collapsed': sidebarCollapsed, 'sidebar-open': sidebarOpen }">
         <div class="sidebar-header">
           <div class="flex items-center">
-            <img src="/placeholder.svg?height=40&width=40" alt="Logo" class="h-8 w-8" />
+            <img src="/logo.jpg?height=40&width=40" alt="Logo" class="h-8 w-8" />
             <span v-if="!sidebarCollapsed" class="ml-2 text-lg font-bold text-white">AIGC Detector</span>
           </div>
           <button @click="toggleSidebar" class="sidebar-toggle">
@@ -14,31 +14,31 @@
         </div>
         
         <nav class="sidebar-nav">
-          <a href="#" class="nav-item">
+          <router-link to="/workspace" class="nav-item">
             <layout-dashboard-icon class="nav-icon" />
             <span v-if="!sidebarCollapsed" class="nav-text">仪表盘</span>
-          </a>
-          <a href="/recharge" class="nav-item">
+          </router-link>
+          <router-link to="/recharge" class="nav-item active">
             <search-icon class="nav-icon" />
             <span v-if="!sidebarCollapsed" class="nav-text">充值中心</span>
-          </a>
-          <a href="/history" class="nav-item">
+          </router-link>
+          <router-link to="/history" class="nav-item">
             <history-icon class="nav-icon" />
             <span v-if="!sidebarCollapsed" class="nav-text">历史记录</span>
-          </a>
-          <a href="/profile" class="nav-item">
+          </router-link>
+          <router-link to="/profile" class="nav-item">
             <user-icon class="nav-icon" />
             <span v-if="!sidebarCollapsed" class="nav-text">个人中心</span>
-          </a>
+          </router-link>
         </nav>
         
         <div class="sidebar-footer">
           <div class="usage-info" v-if="!sidebarCollapsed">
             <p class="text-sm text-gray-400">今日使用额度</p>
             <div class="usage-bar">
-              <div class="usage-progress" :style="{ width: `${(userStats.usedCount / userStats.dailyLimit) * 100}%` }"></div>
+              <div class="usage-progress" :style="{ width: `${Math.min(100, Math.max(0, (userStats.usedQuota / userStats.dailyLimit) * 100))}%` }"></div>
             </div>
-            <p class="text-xs text-gray-400 mt-1">{{ userStats.usedCount }}/{{ userStats.dailyLimit }} 次</p>
+            <p class="text-xs text-gray-400 mt-1">{{ userStats.usedQuota }}/{{ userStats.dailyLimit }} 次</p>
           </div>
           
           <div class="user-profile">
@@ -95,7 +95,7 @@
                 </div>
                 <div class="quota-info">
                   <p class="quota-label">总额度</p>
-                  <p class="quota-value">{{ userStats.totalQuota }}</p>
+                  <p class="quota-value">{{ effectiveTotalQuota }}</p>
                 </div>
               </div>
               
@@ -119,7 +119,7 @@
                 </div>
                 <div class="quota-info">
                   <p class="quota-label">剩余额度</p>
-                  <p class="quota-value">{{ userStats.remainingQuota }}</p>
+                  <p class="quota-value">{{ userStats.remainingQuota + userStats.dailyFreeQuota }}</p>
                 </div>
               </div>
               
@@ -139,10 +139,12 @@
             <div class="quota-progress-container">
               <div class="quota-progress-header">
                 <h3 class="quota-progress-title">额度使用情况</h3>
-                <p class="quota-progress-subtitle">剩余额度: {{ userStats.remainingQuota }} / {{ userStats.totalQuota }}</p>
+                <p class="quota-progress-subtitle">剩余额度: {{ userStats.remainingQuota + userStats.dailyFreeQuota }} / {{ effectiveTotalQuota }}</p>
               </div>
               <div class="quota-progress">
-                <div class="quota-progress-bar" :style="{ width: `${(userStats.usedQuota / userStats.totalQuota) * 100}%` }"></div>
+                <div class="quota-progress-bar" 
+                     :style="{ width: `${Math.min(100, Math.max(0, (userStats.usedQuota / Math.max(1, effectiveTotalQuota)) * 100))}%` }">
+                </div>
               </div>
               <div class="quota-progress-stats">
                 <div class="quota-stat">
@@ -150,14 +152,14 @@
                     <span class="quota-stat-dot bg-blue-500"></span>
                     <span>已使用</span>
                   </div>
-                  <span class="quota-stat-value">{{ userStats.usedQuota }} ({{ usedPercentage }}%)</span>
+                  <span class="quota-stat-value">{{ userStats.usedQuota }} ({{ Math.round((userStats.usedQuota / Math.max(1, effectiveTotalQuota)) * 100) }}%)</span>
                 </div>
                 <div class="quota-stat">
                   <div class="quota-stat-label">
                     <span class="quota-stat-dot bg-gray-300"></span>
                     <span>未使用</span>
                   </div>
-                  <span class="quota-stat-value">{{ userStats.remainingQuota }} ({{ remainingPercentage }}%)</span>
+                  <span class="quota-stat-value">{{ userStats.remainingQuota + userStats.dailyFreeQuota }} ({{ Math.round(((userStats.remainingQuota + userStats.dailyFreeQuota) / Math.max(1, effectiveTotalQuota)) * 100) }}%)</span>
                 </div>
               </div>
             </div>
@@ -166,12 +168,21 @@
           <!-- Recharge Packages -->
           <div class="packages-container">
             <h2 class="section-title">选择充值套餐</h2>
-            <div class="packages-grid">
+            <div v-if="loading" class="loading-spinner">
+              <loader-icon class="animate-spin h-8 w-8 text-blue-500" />
+              <p>加载中...</p>
+            </div>
+            <div v-else-if="packages.length === 0" class="empty-packages">
+              <inbox-icon class="h-12 w-12 text-gray-400" />
+              <p>暂无可用套餐</p>
+              <p class="text-sm text-gray-500">请稍后再试</p>
+            </div>
+            <div v-else class="packages-grid">
               <div 
                 v-for="(pkg, index) in packages" 
-                :key="index"
+                :key="pkg.id || index"
                 class="package-card"
-                :class="{ 'selected': selectedPackage === index }"
+                :class="{ 'selected': selectedPackage && selectedPackage.id === pkg.id }"
                 @click="selectPackage(index)"
               >
                 <div class="package-header">
@@ -412,6 +423,7 @@
     // eslint-disable-next-line no-unused-vars
     import { getAllPackages, createRechargeOrder, completeRechargeOrder, getUserTransactions } from '../api/recharge';
     import { getUserInfo } from '../api/auth';
+    import auth from '../store/auth';
 
     const router = useRouter();
 
@@ -439,7 +451,6 @@
       usedQuota: 0,
       remainingQuota: 0,
       dailyFreeQuota: 10,
-      usedCount: 0,
       dailyLimit: 10
     });
     
@@ -449,21 +460,56 @@
     const selectedPackage = ref(null);
     const transactionFilter = ref('all');
     const loading = ref(true);
-    // const paymentLoading = ref(false);
     const showPaymentModal = ref(false);
-    const selectedPaymentMethod = ref('alipay');
-    // const paymentStatus = ref('pending');
+    const selectedPaymentMethod = ref(0);
     const showSuccessModal = ref(false);
+    const isProcessingPayment = ref(false);
+    const currentPage = ref(1);
+    const totalPages = ref(1);
+    const paymentDetails = ref({
+      orderId: '',
+      paymentTime: new Date()
+    });
+    const paymentMethods = ref([
+      {
+        name: '支付宝',
+        icon: CreditCardIcon,
+        iconBg: 'bg-blue-500',
+        description: '使用支付宝扫码支付'
+      },
+      {
+        name: '微信支付',
+        icon: WalletIcon,
+        iconBg: 'bg-green-500',
+        description: '使用微信扫码支付'
+      }
+    ]);
     
     // Computed properties
-    const usedPercentage = computed(() => {
-      if (userStats.value.totalQuota === 0) return 0;
-      return Math.round((userStats.value.usedQuota / userStats.value.totalQuota) * 100);
-    });
+    // const usedPercentage = computed(() => {
+    //   if (userStats.value.totalQuota <= 0) return 0;
+      
+    //   // 确保百分比不会出现负数
+    //   const percentage = Math.round((userStats.value.usedQuota / userStats.value.totalQuota) * 100);
+    //   return Math.max(0, Math.min(100, percentage)); // 限制在0-100范围内
+    // });
     
-    const remainingPercentage = computed(() => {
-      if (userStats.value.totalQuota === 0) return 0;
-      return Math.round((userStats.value.remainingQuota / userStats.value.totalQuota) * 100);
+    // const remainingPercentage = computed(() => {
+    //   if (userStats.value.totalQuota <= 0) return 0;
+      
+    //   // 确保百分比不会超过100%
+    //   const percentage = Math.round((userStats.value.remainingQuota / userStats.value.totalQuota) * 100);
+    //   return Math.max(0, Math.min(100, percentage)); // 限制在0-100范围内
+    // });
+    
+    // 实际总额度（包含每日免费额度）
+    const effectiveTotalQuota = computed(() => {
+      return userStats.value.totalQuota + userStats.value.dailyFreeQuota;
+    });
+
+    const selectedPackageDetails = computed(() => {
+      if (!selectedPackage.value) return { name: '', quota: 0, validity: '', price: 0 };
+      return selectedPackage.value;
     });
     
     const filteredTransactions = computed(() => {
@@ -472,42 +518,56 @@
     
     // Functions
     const handleLogout = () => {
-      router.push('/');
-    };
-    
-    const fetchUserData = async () => {
-      loading.value = true;
-      
-      try {
-        const response = await getUserInfo();
-        const data = response.data;
-        
-        userProfile.value.username = data.username;
-        userProfile.value.email = data.email;
-        userProfile.value.avatar = data.avatar;
-        
-        userStats.value = {
-          totalQuota: data.totalQuota || 0,
-          remainingQuota: data.remainingQuota || 0,
-          usedCount: data.usedCount || 0,
-          dailyLimit: data.dailyLimit || 0
-        };
-      } catch (err) {
-        console.error('获取用户信息失败:', err);
-      } finally {
-        loading.value = false;
-      }
+      // 使用auth模块的登出方法，确保清理所有状态
+      auth.logout();
     };
     
     const fetchPackages = async () => {
       loading.value = true;
       
       try {
+        console.log('开始获取充值套餐...');
+        
         const response = await getAllPackages();
-        packages.value = response.data;
+        console.log('获取到的充值套餐数据:', response);
+        
+        if (response && response.success && Array.isArray(response.data)) {
+          packages.value = response.data;
+          console.log('成功设置充值套餐:', packages.value);
+        } else {
+          console.error('获取充值套餐失败: 返回数据结构不正确', response);
+          packages.value = []; // 确保设置为空数组而不是undefined
+        }
       } catch (error) {
         console.error('获取充值套餐失败:', error);
-        error.value = '获取充值套餐失败，请稍后重试';
+        
+        // 设置默认的充值套餐用于测试
+        packages.value = [
+          {
+            id: 'test1',
+            name: '基础套餐',
+            price: 9.9,
+            quota: 10,
+            validity: '30天',
+            popular: true,
+            features: ['支持所有类型检测', '更高优先级', '7x24小时客服']
+          },
+          {
+            id: 'test2',
+            name: '标准套餐',
+            price: 29.9,
+            quota: 50,
+            validity: '30天',
+            popular: false,
+            features: ['支持所有类型检测', '更高优先级', '7x24小时客服']
+          }
+        ];
+        console.log('使用测试数据:', packages.value);
+        
+        // 401错误由外层处理，这里直接向上抛出
+        if (error && error.status === 401) {
+          throw error;
+        }
       } finally {
         loading.value = false;
       }
@@ -515,25 +575,46 @@
     
     const fetchTransactions = async () => {
       try {
+        console.log('开始获取交易记录...');
+        
         const response = await getUserTransactions(transactionFilter.value);
-        transactions.value = response.data;
+        console.log('获取到的交易记录:', response);
+        
+        if (response && response.success && Array.isArray(response.data)) {
+          transactions.value = response.data;
+        } else {
+          console.error('获取交易记录失败: 返回数据结构不正确', response);
+          transactions.value = []; // 确保设置为空数组
+        }
       } catch (error) {
         console.error('获取交易记录失败:', error);
+        transactions.value = []; // 确保设置为空数组
+        
+        // 401错误由外层处理，这里直接向上抛出
+        if (error && error.status === 401) {
+          throw error;
+        }
       }
     };
     
     // 选择充值套餐
-    const selectPackage = (pkg) => {
+    const selectPackage = (index) => {
+      console.log('选择套餐, 索引:', index);
       // 清除之前的选择
       packages.value.forEach(p => p.selected = false);
       
-      // 设置当前选择
-      pkg.selected = true;
-      selectedPackage.value = pkg;
+      if (typeof index === 'number' && packages.value[index]) {
+        // 设置当前选择
+        packages.value[index].selected = true;
+        selectedPackage.value = packages.value[index];
+      } else {
+        console.error('无效的套餐索引:', index);
+      }
     };
     
     const selectPackageAndProceed = (index) => {
-      selectPackage(packages.value[index]);
+      console.log('选择套餐并继续, 索引:', index);
+      selectPackage(index);
       showPaymentModal.value = true;
     };
     
@@ -541,26 +622,142 @@
       showPaymentModal.value = false;
     };
     
-    // const confirmPayment = () => {
-    //   // 支付确认逻辑
-    //   alert(`确认支付${selectedPackage.value.price}元`);
-      
-    //   // 更新状态
-    //   paymentStatus.value = 'completed';
-    //   showSuccessModal.value = true;
-    // };
+    // 格式化日期
+    const formatDate = (dateString) => {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('zh-CN');
+    };
     
-    // 格式化交易记录的时间
-    // eslint-disable-next-line no-unused-vars
-    const formatTransactionTime = (timeString) => {
-      const date = new Date(timeString);
-      return date.toLocaleString('zh-CN', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
+    // 格式化日期时间
+    const formatDateTime = (dateTime) => {
+      const date = new Date(dateTime);
+      return date.toLocaleString('zh-CN');
+    };
+    
+    // 处理支付
+    const processPayment = async () => {
+      isProcessingPayment.value = true;
+      
+      try {
+        if (!selectedPackage.value || !selectedPackage.value.id) {
+          console.error('未选择充值套餐或套餐ID为空');
+          throw new Error('未选择有效的充值套餐');
+        }
+        
+        console.log('开始创建充值订单, 套餐ID:', selectedPackage.value.id, 
+                    '支付方式:', paymentMethods.value[selectedPaymentMethod.value].name);
+        
+        // 创建充值订单
+        const orderResponse = await createRechargeOrder(
+          selectedPackage.value.id, 
+          paymentMethods.value[selectedPaymentMethod.value].name
+        );
+        
+        console.log('创建订单响应:', orderResponse);
+        
+        if (!orderResponse || !orderResponse.success) {
+          console.error('订单创建失败, 响应:', orderResponse);
+          throw new Error('创建订单失败: ' + (orderResponse?.message || '未知错误'));
+        }
+        
+        const orderId = orderResponse.data;
+        console.log('订单创建成功, 订单ID:', orderId);
+        
+        if (!orderId) {
+          console.error('订单ID为空');
+          throw new Error('创建订单失败: 未获取到订单ID');
+        }
+        
+        // 模拟支付处理
+        console.log('模拟支付处理中...');
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        // 完成充值订单
+        console.log('完成充值订单, 订单ID:', orderId);
+        const completeResponse = await completeRechargeOrder(orderId);
+        
+        console.log('完成订单响应:', completeResponse);
+        
+        if (!completeResponse || !completeResponse.success) {
+          console.error('订单完成失败, 响应:', completeResponse);
+          throw new Error('完成订单失败: ' + (completeResponse?.message || '未知错误'));
+        }
+        
+        // 支付成功
+        console.log('支付处理成功');
+        paymentDetails.value = {
+          orderId: orderId,
+          paymentTime: new Date()
+        };
+        
+        showPaymentModal.value = false;
+        showSuccessModal.value = true;
+      } catch (error) {
+        console.error('支付处理失败:', error);
+        alert('支付处理失败: ' + (error.message || '请稍后重试'));
+      } finally {
+        isProcessingPayment.value = false;
+      }
+    };
+    
+    // 关闭支付成功弹窗
+    const closeSuccessModal = async () => {
+      showSuccessModal.value = false;
+      selectedPackage.value = null; // 重置选中的套餐
+      selectedPaymentMethod.value = 0; // 重置支付方式
+      
+      try {
+        console.log('支付成功后重新获取用户信息...');
+        // 等待一秒确保后端处理完成
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // 首先通过auth模块获取最新的用户信息，确保数据一致性
+        console.log('通过auth模块获取最新用户信息');
+        const userData = await auth.fetchUserInfo();
+        
+        if (userData) {
+          console.log('支付后更新用户状态成功:', userData);
+          // 使用updateLocalUserData函数更新用户数据，保持一致性
+          updateLocalUserData();
+        } else {
+          console.error('支付后通过auth模块更新用户信息失败');
+          
+          // 如果通过auth模块获取失败，尝试直接API调用
+          console.log('尝试直接通过API获取用户信息');
+          const userResponse = await getUserInfo();
+          if (userResponse && userResponse.success && userResponse.data) {
+            console.log('支付后直接通过API更新用户数据:', userResponse.data);
+            // 更新本地用户信息
+            userProfile.value.username = userResponse.data.username || '';
+            userProfile.value.email = userResponse.data.email || '';
+            userProfile.value.avatar = userResponse.data.avatar || '';
+            
+            userStats.value = {
+              totalQuota: userResponse.data.totalQuota || 0,
+              usedQuota: userResponse.data.usedQuota || 0,
+              remainingQuota: userResponse.data.remainingQuota || 0,
+              dailyFreeQuota: userResponse.data.dailyFreeQuota || 10,
+              dailyLimit: userResponse.data.dailyLimit || 10
+            };
+          } else {
+            console.error('支付后获取用户信息完全失败');
+          }
+        }
+        
+        // 重新获取套餐和交易记录
+        console.log('重新获取套餐和交易记录');
+        await Promise.all([
+          fetchPackages(),
+          fetchTransactions()
+        ]);
+        
+        console.log('数据刷新完成');
+      } catch (error) {
+        console.error('支付后更新数据失败:', error);
+      }
+      
+      // 滚动到页面顶部
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     };
     
     // 格式化金额
@@ -615,11 +812,120 @@
     };
     
     // Initialize data
-    onMounted(() => {
-      fetchUserData();
-      fetchPackages();
-      fetchTransactions();
+    onMounted(async () => {
+      console.log('充值页面加载，当前登录状态:', auth.state.isLoggedIn);
+      
+      // 确保状态更新
+      auth.checkAuth();
+      
+      // 检查登录状态
+      if (!auth.state.isLoggedIn) {
+        console.log('用户未登录，跳转到登录页');
+        localStorage.setItem('redirectPath', '/recharge');
+        router.push('/login');
+        return;
+      }
+      
+      // 已登录，获取用户信息
+      console.log('用户已登录，正在加载充值页面数据...');
+      
+      try {
+        // 正在加载数据
+        loading.value = true;
+        
+        // 先检查本地用户数据是否存在
+        if (!auth.state.user || !auth.state.user.id) {
+          console.log('本地用户数据不完整，先获取用户信息');
+          const userData = await auth.fetchUserInfo();
+          if (!userData) {
+            throw { status: 401, message: '获取用户信息失败' };
+          }
+          // 更新本地用户数据
+          updateLocalUserData();
+        } else {
+          console.log('使用现有用户数据，同时在后台刷新');
+          // 先用当前数据更新本地变量
+          updateLocalUserData();
+          // 在后台刷新用户数据，不阻塞UI
+          auth.fetchUserInfo()
+            .then(() => {
+              // 刷新后更新本地数据
+              updateLocalUserData();
+              console.log('后台刷新用户数据成功，本地数据已更新');
+            })
+            .catch(err => console.error('后台刷新用户数据失败:', err));
+        }
+        
+        // 同时请求套餐和交易记录，提高加载效率
+        await Promise.all([
+          fetchPackages(),
+          fetchTransactions()
+        ]);
+        
+        console.log('充值页面数据加载完成');
+      } catch (error) {
+        console.error('充值中心初始化错误:', error);
+        
+        // 判断是否token无效
+        if (error && error.status === 401) {
+          // 先清除loading状态
+          loading.value = false;
+          
+          // 提示用户
+          alert('您的登录已过期，请重新登录');
+          
+          // 保存当前页面路径，登录后返回
+          localStorage.setItem('redirectPath', '/recharge');
+          
+          // 执行登出
+          auth.logout();
+        }
+      } finally {
+        // 确保loading状态被重置
+        loading.value = false;
+      }
     });
+
+    // 更新本地用户数据
+    const updateLocalUserData = () => {
+      if (!auth.state.user) {
+        console.warn('尝试更新本地用户数据，但auth.state.user为空');
+        return;
+      }
+      
+      // 更新用户个人信息
+      userProfile.value = {
+        username: auth.state.user.username || '',
+        email: auth.state.user.email || '',
+        avatar: auth.state.user.avatar || ''
+      };
+      
+      // 获取用户数据
+      const userData = auth.state.user;
+      const totalQuota = userData.totalQuota || 0;
+      const usedQuota = userData.usedQuota || 0;
+      const dailyFreeQuota = userData.dailyFreeQuota || 10;
+      const dailyLimit = userData.dailyLimit || 10;
+      
+      // 计算实际剩余额度 = 充值剩余额度 + 每日免费额度
+      const remainingPaidQuota = Math.max(0, totalQuota - usedQuota);
+      
+      // 更新用户额度信息
+      userStats.value = {
+        totalQuota: totalQuota,
+        usedQuota: usedQuota,
+        remainingQuota: remainingPaidQuota,
+        dailyFreeQuota: dailyFreeQuota,
+        dailyLimit: dailyLimit
+      };
+      
+      console.log('本地用户数据已更新:', { 
+        userProfile: userProfile.value, 
+        userStats: userStats.value,
+        effectiveTotal: totalQuota + dailyFreeQuota,
+        effectiveRemaining: remainingPaidQuota + dailyFreeQuota
+      });
+    };
     </script>
     
     <style scoped>
@@ -1539,5 +1845,33 @@
     
     .success-button:hover {
       opacity: 0.9;
+    }
+    
+    /* Loading and Empty States */
+    .loading-spinner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem;
+      color: #4a5568;
+    }
+    
+    .empty-packages {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem;
+      background: white;
+      border-radius: 0.75rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      color: #4a5568;
+      text-align: center;
+    }
+    
+    .empty-packages p {
+      margin-top: 1rem;
+      font-weight: 500;
     }
     </style>

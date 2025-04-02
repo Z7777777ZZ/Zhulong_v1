@@ -10,6 +10,7 @@ import HelpPage from '../views/HelpPage.vue'
 import ProfilePage from '@/views/ProfilePage.vue'
 import RechargePage from '@/views/RechargePage.vue'
 import ContactPage from '@/views/ContactPage.vue'
+import ServicePage from '@/views/ServicePage.vue'
 
 const routes = [
   {
@@ -84,6 +85,11 @@ const routes = [
     path: '/contact',
     name: 'contact',
     component: ContactPage
+  },
+  {
+    path: '/service',
+    name: 'service',
+    component: ServicePage
   }
 ]
 

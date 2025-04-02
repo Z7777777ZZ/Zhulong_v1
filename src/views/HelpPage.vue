@@ -80,7 +80,7 @@
                 <play-icon class="play-icon" />
               </div>
             </div>
-            <h3 class="tutorial-title">如何使用图片检测功能</h3>
+            <h3 class="tutorial-title">如何使用图片检测功能(待更新)</h3>
             <p class="tutorial-duration">3分钟</p>
           </div>
           
@@ -91,7 +91,7 @@
                 <play-icon class="play-icon" />
               </div>
             </div>
-            <h3 class="tutorial-title">文本检测详细指南</h3>
+            <h3 class="tutorial-title">文本检测详细指南(待更新)</h3>
             <p class="tutorial-duration">5分钟</p>
           </div>
           
@@ -102,7 +102,7 @@
                 <play-icon class="play-icon" />
               </div>
             </div>
-            <h3 class="tutorial-title">如何理解检测报告</h3>
+            <h3 class="tutorial-title">如何理解检测报告(待更新)</h3>
             <p class="tutorial-duration">4分钟</p>
           </div>
           
@@ -113,7 +113,7 @@
                 <play-icon class="play-icon" />
               </div>
             </div>
-            <h3 class="tutorial-title">账户管理与设置</h3>
+            <h3 class="tutorial-title">账户管理与设置(待更新)</h3>
             <p class="tutorial-duration">2分钟</p>
           </div>
         </div>
@@ -127,7 +127,7 @@
             <book-open-icon class="button-icon" />
             查看文档
           </a>
-          <a href="mailto:support@aigcdetector.com" class="cta-button secondary">
+          <a href="/contact" class="cta-button secondary">
             <message-circle-icon class="button-icon" />
             联系客服
           </a>
