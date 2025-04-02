@@ -47,22 +47,40 @@ public class RechargeController {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         
+        System.out.println("创建充值订单 - 用户ID: " + userDetails.getId() + ", 套餐ID: " + packageId + ", 支付方式: " + paymentMethod);
+        
         try {
             String orderId = rechargeService.createRechargeOrder(userDetails.getId(), packageId, paymentMethod);
+            System.out.println("订单创建成功 - 订单ID: " + orderId);
             return ResponseEntity.ok(ApiResponse.success("订单创建成功", orderId));
         } catch (IllegalArgumentException e) {
+            System.out.println("订单创建失败 - 错误: " + e.getMessage());
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            System.out.println("订单创建发生未知错误: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(ApiResponse.error("服务器错误，请稍后重试"));
         }
     }
 
     @PostMapping("/complete/{orderId}")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<?> completeRechargeOrder(@PathVariable String orderId) {
-        boolean completed = rechargeService.completeRechargeOrder(orderId);
-        if (completed) {
-            return ResponseEntity.ok(ApiResponse.success("充值成功"));
-        } else {
-            return ResponseEntity.badRequest().body(ApiResponse.error("充值失败"));
+        System.out.println("完成充值订单 - 订单ID: " + orderId);
+        
+        try {
+            boolean completed = rechargeService.completeRechargeOrder(orderId);
+            if (completed) {
+                System.out.println("充值成功 - 订单ID: " + orderId);
+                return ResponseEntity.ok(ApiResponse.success("充值成功"));
+            } else {
+                System.out.println("充值失败 - 订单ID: " + orderId);
+                return ResponseEntity.badRequest().body(ApiResponse.error("充值失败，订单不存在或状态异常"));
+            }
+        } catch (Exception e) {
+            System.out.println("充值过程发生异常: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(ApiResponse.error("服务器错误，请稍后重试"));
         }
     }
 

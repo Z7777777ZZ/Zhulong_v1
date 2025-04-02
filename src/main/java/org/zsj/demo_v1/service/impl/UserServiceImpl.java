@@ -111,6 +111,7 @@ public class UserServiceImpl implements UserService {
         userInfoResponse.setAvatar(user.getAvatar());
         userInfoResponse.setRole(user.getRole());
         userInfoResponse.setTotalQuota(userQuota.getTotalQuota());
+        userInfoResponse.setUsedQuota(userQuota.getUsedQuota());
         userInfoResponse.setRemainingQuota(userQuota.getRemainingQuota());
         userInfoResponse.setUsedCount(userQuota.getUsedQuota());
         userInfoResponse.setDailyLimit(userQuota.getDailyFreeQuota());

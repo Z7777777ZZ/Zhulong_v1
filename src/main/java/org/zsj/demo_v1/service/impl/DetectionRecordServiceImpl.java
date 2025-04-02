@@ -66,6 +66,26 @@ public class DetectionRecordServiceImpl implements DetectionRecordService {
         return false;
     }
 
+    @Override
+    public Long createDetectionRecord(Long userId, Integer typeId, String fileName, Long fileSize, 
+                                     String content, Integer result, Integer confidence, String analysis) {
+        DetectionRecord record = new DetectionRecord();
+        record.setUserId(userId);
+        record.setDetectionTypeId(typeId);
+        record.setFileName(fileName);
+        record.setFileSize(fileSize);
+        record.setContent(content);
+        record.setResult(result);
+        record.setConfidence(confidence != null ? BigDecimal.valueOf(confidence) : BigDecimal.ZERO);
+        record.setAnalysis(analysis);
+        record.setDetectionTime(LocalDateTime.now());
+        record.setStatus(1); // 1表示检测成功
+        
+        // 插入记录并返回ID
+        detectionRecordMapper.insert(record);
+        return record.getId();
+    }
+
     private List<DetectionRecordResponse> convertToResponseList(List<DetectionRecord> records) {
         if (records == null || records.isEmpty()) {
             return new ArrayList<>();

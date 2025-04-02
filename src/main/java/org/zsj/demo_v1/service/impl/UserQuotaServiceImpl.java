@@ -73,4 +73,18 @@ public class UserQuotaServiceImpl implements UserQuotaService {
         
         return rows > 0;
     }
+
+    @Override
+    @Transactional
+    public boolean updateUserQuota(UserQuota userQuota) {
+        // 检查用户额度是否存在
+        if (userQuota == null || userQuota.getUserId() == null) {
+            return false;
+        }
+        
+        // 更新用户额度
+        int rows = userQuotaMapper.update(userQuota);
+        
+        return rows > 0;
+    }
 } 

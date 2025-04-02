@@ -18,6 +18,7 @@ public class DetectionRecord {
     private LocalDateTime detectionTime;
     private Integer status; // 0-处理中，1-已完成，2-失败
     private String errorMessage;
+    private String analysis; // 分析结果
     
     // 关联属性
     private DetectionType detectionType;

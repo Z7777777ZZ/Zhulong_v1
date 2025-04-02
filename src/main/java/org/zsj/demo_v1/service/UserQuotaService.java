@@ -10,4 +10,6 @@ public interface UserQuotaService {
     boolean checkAndResetDailyQuota(Long userId);
     
     boolean consumeQuota(Long userId, Integer quotaAmount);
+    
+    boolean updateUserQuota(UserQuota userQuota);
 } 

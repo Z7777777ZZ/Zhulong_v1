@@ -76,25 +76,61 @@ public class RechargeServiceImpl implements RechargeService {
     @Override
     @Transactional
     public boolean completeRechargeOrder(String orderId) {
+        System.out.println("开始处理充值订单完成, 订单ID: " + orderId);
+        
         Transaction transaction = transactionMapper.findByOrderId(orderId);
-        if (transaction == null || transaction.getStatus() != 0) {
+        if (transaction == null) {
+            System.out.println("订单不存在: " + orderId);
+            return false;
+        }
+        
+        if (transaction.getStatus() != 0) {
+            System.out.println("订单状态不正确, 当前状态: " + transaction.getStatus() + ", 订单ID: " + orderId);
             return false;
         }
 
-        // 更新交易状态
-        transaction.setStatus(1); // 支付成功
-        transaction.setPayTime(LocalDateTime.now());
-        transactionMapper.update(transaction);
+        try {
+            // 更新交易状态
+            transaction.setStatus(1); // 支付成功
+            transaction.setPayTime(LocalDateTime.now());
+            int updateResult = transactionMapper.update(transaction);
+            
+            if (updateResult <= 0) {
+                System.out.println("更新交易状态失败, 订单ID: " + orderId);
+                throw new RuntimeException("更新交易状态失败");
+            }
+            
+            System.out.println("交易状态更新成功, 订单ID: " + orderId);
 
-        // 增加用户额度
-        UserQuota userQuota = userQuotaService.getUserQuota(transaction.getUserId());
-        userQuota.setTotalQuota(userQuota.getTotalQuota() + transaction.getQuota());
-        userQuota.setRemainingQuota(userQuota.getRemainingQuota() + transaction.getQuota());
+            // 增加用户额度
+            UserQuota userQuota = userQuotaService.getUserQuota(transaction.getUserId());
+            if (userQuota == null) {
+                System.out.println("用户额度记录不存在, 用户ID: " + transaction.getUserId());
+                throw new RuntimeException("用户额度记录不存在");
+            }
+            
+            System.out.println("当前用户额度 - 总额度: " + userQuota.getTotalQuota() + ", 剩余额度: " + userQuota.getRemainingQuota());
+            
+            userQuota.setTotalQuota(userQuota.getTotalQuota() + transaction.getQuota());
+            userQuota.setRemainingQuota(userQuota.getRemainingQuota() + transaction.getQuota());
+            
+            System.out.println("更新后用户额度 - 总额度: " + userQuota.getTotalQuota() + ", 剩余额度: " + userQuota.getRemainingQuota());
 
-        // 这里需要更新用户额度，但UserQuotaService中没有提供更新方法，假设有updateUserQuota方法
-        // userQuotaService.updateUserQuota(userQuota);
-        
-        return true;
+            // 使用updateUserQuota方法更新用户额度
+            boolean updated = userQuotaService.updateUserQuota(userQuota);
+            
+            if (!updated) {
+                System.out.println("更新用户额度失败, 用户ID: " + transaction.getUserId());
+                throw new RuntimeException("更新用户额度失败");
+            }
+            
+            System.out.println("充值完成, 订单ID: " + orderId);
+            return true;
+        } catch (Exception e) {
+            System.out.println("充值过程发生异常: " + e.getMessage());
+            e.printStackTrace();
+            throw e; // 重新抛出异常，让事务回滚
+        }
     }
 
     @Override

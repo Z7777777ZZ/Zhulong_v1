@@ -15,6 +15,7 @@ public class UserInfoResponse {
     private String avatar;
     private String role;
     private Integer totalQuota;
+    private Integer usedQuota;
     private Integer remainingQuota;
     private Integer usedCount;
     private Integer dailyLimit;
